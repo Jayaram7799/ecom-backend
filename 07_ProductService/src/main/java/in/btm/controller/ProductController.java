@@ -1,0 +1,126 @@
+package in.btm.controller;
+
+import java.time.LocalDateTime;
+
+import in.btm.dto.*;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import in.btm.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@RequestMapping("/api/products")
+@Slf4j
+public class ProductController {
+
+	private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    @PostMapping
+	public ResponseEntity<ApiResponse<ProductResponse>> createProduct(@Valid @RequestBody ProductRequest request,
+			HttpServletRequest httpRequest) {
+
+		ProductResponse response = productService.createProduct(request);
+
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.<ProductResponse>builder().success(true).message("Product created successfully")
+						.data(response).status(HttpStatus.CREATED.value()).path(httpRequest.getRequestURI())
+						.timestamp(LocalDateTime.now()).build());
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<ApiResponse<ProductDetailsResponse>> getProductById(@PathVariable Integer id,
+			HttpServletRequest httpRequest, Authentication authentication) {
+
+		log.info("===== PRODUCT API HIT =====");
+		log.info("Request URI: {}", httpRequest.getRequestURI());
+		log.info("Product Id: {}", id);
+
+		if (authentication != null) {
+			log.info("Authenticated User: {}", authentication.name());
+
+		} else {
+			log.warn("Authentication is NULL");
+		}
+
+		ProductDetailsResponse response = productService.getProductById(id);
+
+		log.info("Returning product details for id={}", id);
+
+		return ResponseEntity.ok(ApiResponse.<ProductDetailsResponse>builder().success(true)
+				.message("Product fetched successfully").data(response).status(HttpStatus.OK.value())
+				.path(httpRequest.getRequestURI()).timestamp(LocalDateTime.now()).build());
+	}
+
+	@GetMapping
+	public ResponseEntity<ApiResponse<ProductPageResponse>> getAllProducts(
+			@RequestParam(defaultValue = "0") Integer page,
+			@RequestParam(defaultValue = "10") Integer size,
+			@RequestParam(required = false) String sortBy,
+			@RequestParam(required = false) Integer categoryId,
+			@RequestParam(required = false) String search,
+			@RequestParam(required = false) Double rating,
+			@RequestParam(required = false) Double minPrice,
+			@RequestParam(required = false) Double maxPrice,
+			HttpServletRequest httpRequest) {
+
+		ProductPageResponse response =
+				productService.getAllProducts(
+						page,
+						size,
+						sortBy,
+						categoryId,
+						search,
+						rating,
+						minPrice,
+						maxPrice);
+
+		return ResponseEntity.ok(
+				ApiResponse.<ProductPageResponse>builder()
+						.success(true)
+						.message("Products fetched successfully")
+						.data(response)
+						.status(HttpStatus.OK.value())
+						.path(httpRequest.getRequestURI())
+						.timestamp(LocalDateTime.now())
+						.build()
+		);
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(@PathVariable Integer id,
+			@Valid @RequestBody ProductRequest request, HttpServletRequest httpRequest) {
+
+		ProductResponse response = productService.updateProduct(id, request);
+
+		return ResponseEntity.ok(ApiResponse.<ProductResponse>builder().success(true)
+				.message("Product updated successfully").data(response).status(HttpStatus.OK.value())
+				.path(httpRequest.getRequestURI()).timestamp(LocalDateTime.now()).build());
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Integer id, HttpServletRequest httpRequest) {
+
+		productService.deleteProduct(id);
+
+		return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Product deleted successfully")
+				.status(HttpStatus.OK.value()).path(httpRequest.getRequestURI()).timestamp(LocalDateTime.now())
+				.build());
+	}
+}

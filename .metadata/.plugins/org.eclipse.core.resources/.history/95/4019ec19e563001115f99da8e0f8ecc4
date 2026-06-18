@@ -1,0 +1,5 @@
+package in.btm.exceptions;
+
+public class InvalidResetTokenException extends RuntimeException {
+
+}

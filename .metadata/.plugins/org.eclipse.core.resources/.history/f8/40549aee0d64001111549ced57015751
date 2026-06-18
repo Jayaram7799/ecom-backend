@@ -1,0 +1,5 @@
+package in.btm.exception;
+
+public class GlobalExceptionHandler {
+
+}

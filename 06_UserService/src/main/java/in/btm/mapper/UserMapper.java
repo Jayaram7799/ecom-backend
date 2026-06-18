@@ -1,0 +1,14 @@
+package in.btm.mapper;
+
+import org.mapstruct.Mapper;
+
+import in.btm.dto.UserDto;
+import in.btm.entity.UserProfile;
+
+@Mapper(componentModel = "spring")
+public interface UserMapper {
+	UserProfile toEntity(UserDto dto);
+
+	UserDto toDto(UserProfile user);
+
+}

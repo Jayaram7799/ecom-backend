@@ -1,0 +1,228 @@
+package in.btm.service;
+
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import in.btm.dto.ProductRequest;
+import in.btm.dto.ProductResponse;
+import in.btm.entity.Category;
+import in.btm.entity.Product;
+import in.btm.exception.CategoryNotFoundException;
+import in.btm.exception.ProductNotFoundException;
+import in.btm.mapper.ProductMapper;
+import in.btm.mapper.productMapper;
+import in.btm.repository.CategoryJpaRepository;
+import in.btm.repository.ProductJpaRepository;
+import in.btm.spec.ProductSpecification;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional(readOnly = true)
+public class ProductServiceImpl implements ProductService {
+
+    private static final String PRODUCT_CACHE = "product";
+    private static final String PRODUCT_PAGE_CACHE = "product-page";
+
+    private final ProductJpaRepository jpaRepository;
+    private final CategoryJpaRepository categoryJpaRepository;
+    private final ProductMapper productMapper;
+
+    /**
+     * CREATE PRODUCT
+     * Save DB + Clear listing cache
+     */
+    @Override
+    @Transactional
+    @CacheEvict(value = PRODUCT_PAGE_CACHE, allEntries = true)
+    public ProductResponse createProduct(ProductRequest request) {
+
+        log.info("Create product request received");
+
+        Category category = categoryJpaRepository.findById(request.getCategoryId())
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found : " + request.getCategoryId()));
+
+        Product product = productMapper.toEntity(request);
+        product.setCategory(category);
+        product.setActive(true);
+
+        Product saved = jpaRepository.save(product);
+
+        log.info("Product created successfully id={}", saved.getId());
+
+        return productMapper.toResponse(saved);
+    }
+
+    /**
+     * GET PRODUCT BY ID
+     * First -> DB
+     * Next -> Redis
+     */
+    @Override
+    @Cacheable(value = PRODUCT_CACHE, key = "#id", unless = "#result == null")
+    public ProductResponse getProductById(Integer id) {
+
+        log.info("Fetching product from DB id={}", id);
+
+        Product product = jpaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(
+                                "Product not found : " + id));
+
+        if (!product.isActive()) {
+            throw new ProductNotFoundException(
+                    "Inactive product : " + id);
+        }
+
+        return productMapper.toResponse(product);
+    }
+
+    /**
+     * GET PRODUCTS WITH PAGINATION + FILTER + SORT
+     */
+    @Override
+    @Cacheable(
+            value = PRODUCT_PAGE_CACHE,
+            key = "#page + '-' + #size + '-' + #sortBy + '-' + #categoryId + '-' + #search + '-' + #minPrice + '-' + #maxPrice"
+    )
+   
+    public Page<ProductResponse> getAllProducts(
+            int page,
+            int size,
+            String sortBy,
+            Integer categoryId,
+            String search,
+            Double minPrice,
+            Double maxPrice) {
+
+        log.info("Fetching products page={} size={}", page, size);
+
+        Sort sort = buildSort(sortBy);
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Specification<Product> spec =
+                Specification.where(ProductSpecification.isActive());
+
+        if (categoryId != null) {
+            spec = spec.and(ProductSpecification.hasCategory(categoryId));
+        }
+
+        if (search != null && !search.isBlank()) {
+            spec = spec.and(ProductSpecification.titleContains(search));
+        }
+
+        if (minPrice != null) {
+            spec = spec.and(ProductSpecification.minPrice(minPrice));
+        }
+
+        if (maxPrice != null) {
+            spec = spec.and(ProductSpecification.maxPrice(maxPrice));
+        }
+
+        return jpaRepository.findAll(spec, pageable)
+                .map(productMapper::toResponse);
+    }
+
+    /**
+     * UPDATE PRODUCT
+     * DB + Clear cache
+     */
+    @Override
+    @Transactional
+    @CacheEvict(value = PRODUCT_CACHE, key = "#id")
+    @CacheEvict(value = PRODUCT_PAGE_CACHE, allEntries = true)
+    public ProductResponse updateProduct(
+            Integer id,
+            ProductRequest request) {
+
+        log.info("Updating product id={}", id);
+
+        Product product = jpaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(
+                                "Product not found : " + id));
+
+        Category category = categoryJpaRepository.findById(request.getCategoryId())
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found : " + request.getCategoryId()));
+
+        productMapper.updateProductFromDto(request, product);
+        product.setCategory(category);
+
+        Product updated = jpaRepository.save(product);
+
+        log.info("Product updated successfully id={}", id);
+
+        return productMapper.toResponse(updated);
+    }
+
+    /**
+     * SOFT DELETE
+     */
+    @Override
+    @Transactional
+    @CacheEvict(value = PRODUCT_CACHE, key = "#id")
+    @CacheEvict(value = PRODUCT_PAGE_CACHE, allEntries = true)
+    public void deleteProduct(Integer id) {
+
+        log.info("Deleting product id={}", id);
+
+        Product product = jpaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(
+                                "Product not found : " + id));
+
+        product.setActive(false);
+
+        jpaRepository.save(product);
+
+        log.info("Product deleted successfully id={}", id);
+    }
+
+    /**
+     * Dynamic Sorting
+     */
+    private Sort buildSort(String sortBy) {
+
+        if (sortBy == null || sortBy.isBlank()) {
+            return Sort.by(Sort.Direction.DESC, "id");
+        }
+
+        return switch (sortBy.toLowerCase()) {
+
+            case "priceasc" ->
+                    Sort.by(Sort.Direction.ASC, "price");
+
+            case "pricedesc" ->
+                    Sort.by(Sort.Direction.DESC, "price");
+
+            case "nameasc" ->
+                    Sort.by(Sort.Direction.ASC, "title");
+
+            case "namedesc" ->
+                    Sort.by(Sort.Direction.DESC, "title");
+
+            case "latest" ->
+                    Sort.by(Sort.Direction.DESC, "createdAt");
+
+            default ->
+                    Sort.by(Sort.Direction.DESC, "id");
+        };
+    }
+}

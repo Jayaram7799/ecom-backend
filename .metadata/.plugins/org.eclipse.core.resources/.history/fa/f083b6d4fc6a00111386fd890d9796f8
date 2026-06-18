@@ -1,0 +1,65 @@
+package in.btm.dto;
+
+
+
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Generic Pagination Response
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PageResponse<T> {
+
+    /**
+     * Current page data
+     */
+    private List<T> content;
+
+    /**
+     * Current page number (0 based)
+     */
+    private int page;
+
+    /**
+     * Records per page
+     */
+    private int size;
+
+    /**
+     * Total pages available
+     */
+    private int totalPages;
+
+    /**
+     * Total records count
+     */
+    private long totalElements;
+
+    /**
+     * Is last page
+     */
+    private boolean last;
+
+    /**
+     * Is first page
+     */
+    private boolean first;
+
+    /**
+     * Current page item count
+     */
+    private int numberOfElements;
+
+    /**
+     * Is page empty
+     */
+    private boolean empty;
+}

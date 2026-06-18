@@ -1,0 +1,62 @@
+package in.btm.mapper;
+
+import in.btm.dto.AddressDto;
+import in.btm.entity.Address;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2026-06-09T10:30:27+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.5 (Eclipse Adoptium)"
+)
+@Component
+public class AddressMapperImpl implements AddressMapper {
+
+    @Override
+    public AddressDto toDto(Address address) {
+        if ( address == null ) {
+            return null;
+        }
+
+        AddressDto addressDto = new AddressDto();
+
+        if ( address.getId() != null ) {
+            addressDto.setId( address.getId().longValue() );
+        }
+        addressDto.setStreet( address.getStreet() );
+        addressDto.setCity( address.getCity() );
+        addressDto.setState( address.getState() );
+        addressDto.setZipCode( address.getZipCode() );
+
+        return addressDto;
+    }
+
+    @Override
+    public Address toEntity(AddressDto dto) {
+        if ( dto == null ) {
+            return null;
+        }
+
+        Address address = new Address();
+
+        address.setStreet( dto.getStreet() );
+        address.setCity( dto.getCity() );
+        address.setState( dto.getState() );
+        address.setZipCode( dto.getZipCode() );
+
+        return address;
+    }
+
+    @Override
+    public void updateEntityFromDto(AddressDto dto, Address address) {
+        if ( dto == null ) {
+            return;
+        }
+
+        address.setStreet( dto.getStreet() );
+        address.setCity( dto.getCity() );
+        address.setState( dto.getState() );
+        address.setZipCode( dto.getZipCode() );
+    }
+}

@@ -1,0 +1,13 @@
+package in.btm.repository;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import in.btm.entity.UserProfile;
+
+public interface UserRepository extends JpaRepository<UserProfile, Integer> {
+	 Optional<UserProfile> findByEmail(String email);
+
+	    boolean existsByEmail(String email);
+}

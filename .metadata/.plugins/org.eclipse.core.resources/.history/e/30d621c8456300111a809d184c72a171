@@ -1,0 +1,129 @@
+package in.btm.service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import in.btm.dto.ActivateAccountRequest;
+import in.btm.dto.AuthResponse;
+import in.btm.dto.ForgotPasswordRequest;
+import in.btm.dto.LoginRequestDto;
+import in.btm.dto.RegisterRequest;
+import in.btm.entity.AuthUser;
+import in.btm.enums.AccountStatus;
+import in.btm.enums.UserRole;
+import in.btm.exceptions.AccountNotActivatedException;
+import in.btm.exceptions.EmailAlreadyExistsException;
+import in.btm.exceptions.EmailNotRegisteredException;
+import in.btm.exceptions.InvalidTemporaryPasswordException;
+import in.btm.exceptions.PasswordMismatchException;
+import in.btm.repository.AuthRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class AuthServiceImpl implements AuthService {
+
+	private final AuthRepository authRepository;
+	private final PasswordEncoder passwordEncoder;
+
+	@Override
+	public void register(RegisterRequest request) {
+
+		if (authRepository.existsByEmail(request.getEmail())) {
+			throw new EmailAlreadyExistsException("Email already registered");
+		}
+
+		AuthUser authUser = AuthUser.builder().email(request.getEmail())
+
+				.role(UserRole.USER).status(AccountStatus.INACTIVE).build();
+
+		authRepository.save(authUser);
+
+		log.info("User registered successfully: {}", request.getEmail());
+	}
+
+	@Override
+	public void activate(ActivateAccountRequest request) {
+
+		AuthUser user = authRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new EmailNotRegisteredException("Email not registered"));
+
+		if (AccountStatus.ACTIVE.equals(user.getStatus())) {
+			throw new AccountNotActivatedException("Account already activated");
+		}
+
+		if (!passwordEncoder.matches(request.getTemporaryPassword(), user.getPassword())) {
+
+			throw new InvalidTemporaryPasswordException("Invalid temporary password");
+		}
+
+		if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+
+			throw new PasswordMismatchException("Passwords do not match");
+		}
+
+		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+		user.setStatus(AccountStatus.ACTIVE);
+
+		authRepository.save(user);
+
+		log.info("Account activated: {}", request.getEmail());
+	}
+
+	@Override
+	public AuthResponse login(LoginRequestDto request) {
+
+		AuthUser user = authRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new EmailNotRegisteredException("Email not registered"));
+
+		if (user.getStatus() != AccountStatus.ACTIVE) {
+			throw new AccountNotActivatedException("Account not activated");
+		}
+
+		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+
+			throw new InvalidTemporaryPasswordException("Invalid credentials");
+		}
+
+		String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+
+		return AuthResponse.builder().accessToken(token).tokenType("Bearer").email(user.getEmail())
+				.role(user.getRole().name()).build();
+	}
+
+	@Override
+	public void forgotPassword(ForgotPasswordRequest request) {
+
+		AuthUser user = authRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new EmailNotRegisteredException("Email not registered"));
+
+		String resetToken = UUID.randomUUID().toString();
+
+		user.setResetToken(resetToken);
+
+		user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(15));
+
+		authRepository.save(user);
+
+		log.info("Reset token generated for: {}", request.getEmail());
+
+		// TODO
+		// emailService.sendResetEmail(
+		// request.getEmail(),
+		// resetToken);
+	}
+
+	@Override
+	public boolean isEmailExists(String email) {
+
+		return authRepository.existsByEmail(email);
+	}
+}

@@ -1,0 +1,5 @@
+package in.btm.service;
+
+public interface AuthService {
+
+}

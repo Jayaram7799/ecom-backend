@@ -1,0 +1,13 @@
+package in.btm.repository;
+
+import java.util.List;
+import java.util.Locale.Category;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import in.btm.entity.Product;
+
+public interface CategoryJpaRepository extends JpaRepository<Category, Integer> {
+
+	boolean existsByNameIgnoreCase(String name);
+}

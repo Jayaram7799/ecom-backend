@@ -1,0 +1,5 @@
+package in.btm.dto;
+
+public class UserDto {
+
+}

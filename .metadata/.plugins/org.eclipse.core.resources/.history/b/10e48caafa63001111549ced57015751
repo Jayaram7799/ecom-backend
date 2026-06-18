@@ -1,0 +1,14 @@
+package in.btm.repository;
+
+import java.util.List;
+import java.util.Locale.Category;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import in.btm.entity.Product;
+
+public interface CategoryRepository extends JpaRepository<Category, Integer> {
+	 List<Product> findByCategoryIdAndIdNot(
+	            Integer categoryId,
+	            Integer id);
+}

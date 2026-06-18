@@ -1,0 +1,225 @@
+package in.btm.exception;
+
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import in.btm.dto.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+
+@RestControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+
+    /**
+     * Product Not Found
+     */
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>>
+    handleProductNotFound(
+            ProductNotFoundException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity.status(
+                HttpStatus.NOT_FOUND)
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message(ex.getMessage())
+                                .error(null)
+                                .status(
+                                        HttpStatus.NOT_FOUND.value()
+                                )
+                                .path(
+                                        request.getRequestURI()
+                                )
+                                .timestamp(
+                                        LocalDateTime.now()
+                                )
+                                .build()
+                );
+    }
+
+    /**
+     * Category Not Found
+     */
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>>
+    handleCategoryNotFound(
+            CategoryNotFoundException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity.status(
+                HttpStatus.NOT_FOUND)
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message(ex.getMessage())
+                                .status(
+                                        HttpStatus.NOT_FOUND.value()
+                                )
+                                .path(
+                                        request.getRequestURI()
+                                )
+                                .timestamp(
+                                        LocalDateTime.now()
+                                )
+                                .build()
+                );
+    }
+
+    /**
+     * Category Already Exists
+     */
+    @ExceptionHandler(
+            CategoryAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>>
+    handleCategoryAlreadyExists(
+            CategoryAlreadyExistsException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity.status(
+                HttpStatus.CONFLICT)
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message(ex.getMessage())
+                                .status(
+                                        HttpStatus.CONFLICT.value()
+                                )
+                                .path(
+                                        request.getRequestURI()
+                                )
+                                .timestamp(
+                                        LocalDateTime.now()
+                                )
+                                .build()
+                );
+    }
+
+    /**
+     * Bean Validation Errors
+     */
+    @ExceptionHandler(
+            MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>>
+    handleValidationException(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+
+        Map<String, String> errors =
+                new HashMap<>();
+
+        ex.getBindingResult()
+                .getAllErrors()
+                .forEach(error -> {
+
+                    String field =
+                            ((FieldError) error)
+                                    .getField();
+
+                    String message =
+                            error.getDefaultMessage();
+
+                    errors.put(
+                            field,
+                            message
+                    );
+                });
+
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message(
+                                        "Validation failed"
+                                )
+                                .error(errors)
+                                .status(
+                                        HttpStatus.BAD_REQUEST.value()
+                                )
+                                .path(
+                                        request.getRequestURI()
+                                )
+                                .timestamp(
+                                        LocalDateTime.now()
+                                )
+                                .build()
+                );
+    }
+
+    /**
+     * Illegal Argument
+     */
+    @ExceptionHandler(
+            IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>>
+    handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message(ex.getMessage())
+                                .status(
+                                        HttpStatus.BAD_REQUEST.value()
+                                )
+                                .path(
+                                        request.getRequestURI()
+                                )
+                                .timestamp(
+                                        LocalDateTime.now()
+                                )
+                                .build()
+                );
+    }
+
+    /**
+     * Catch All
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>>
+    handleException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        log.error(
+                "Unhandled exception",
+                ex
+        );
+
+        return ResponseEntity.status(
+                HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message(
+                                        "Something went wrong"
+                                )
+                                .error(
+                                        ex.getMessage()
+                                )
+                                .status(
+                                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                                )
+                                .path(
+                                        request.getRequestURI()
+                                )
+                                .timestamp(
+                                        LocalDateTime.now()
+                                )
+                                .build()
+                );
+    }
+}

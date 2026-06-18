@@ -1,0 +1,195 @@
+package in.btm.filter;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.server.ServerWebExchange;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import in.btm.dto.ApiResponse;
+import in.btm.util.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
+
+@Component
+@Order(-1)
+@RequiredArgsConstructor
+public class GatewayAuthFilter implements GlobalFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(GatewayAuthFilter.class);
+
+    private final JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        String path = exchange.getRequest().getURI().getPath();
+        String method = exchange.getRequest().getMethod().name();
+
+        log.info("Request: {} {}", method, path);
+
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        List<String> publicUrls = List.of(
+                "/auth/**",
+                "/api/users",
+                "/users/*/activate");
+
+        // Allow CORS preflight requests
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return chain.filter(exchange);
+        }
+
+        // Allow public endpoints
+        if (publicUrls.stream().anyMatch(pattern -> matcher.match(pattern, path))) {
+            return chain.filter(exchange);
+        }
+
+        String authHeader = exchange.getRequest()
+                .getHeaders()
+                .getFirst("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+            log.warn("Missing Authorization header");
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7);
+
+        try {
+
+            jwtUtil.validateToken(token);
+
+            String email = jwtUtil.extractEmail(token);
+            String role = jwtUtil.extractRole(token);
+
+            log.info("Authenticated User: {} Role: {}", email, role);
+
+            ServerHttpRequest request = exchange.getRequest()
+                    .mutate()
+                    .header("X-User-Email", email)
+                    .header("X-User-Role", role)
+                    .build();
+
+            return chain.filter(
+                    exchange.mutate()
+                            .request(request)
+                            .build());
+
+        } catch (ExpiredJwtException ex) {
+
+            log.warn("JWT token expired");
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "JWT token has expired");
+
+        } catch (SignatureException ex) {
+
+            log.warn("Invalid JWT signature");
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid JWT signature");
+
+        } catch (MalformedJwtException ex) {
+
+            log.warn("Malformed JWT token");
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Malformed JWT token");
+
+        } catch (UnsupportedJwtException ex) {
+
+            log.warn("Unsupported JWT token");
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Unsupported JWT token");
+
+        } catch (IllegalArgumentException ex) {
+
+            log.warn("JWT claims string is empty");
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "JWT token is empty");
+
+        } catch (Exception ex) {
+
+            log.error("JWT validation failed", ex);
+
+            return errorResponse(
+                    exchange,
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid JWT token");
+        }
+    }
+
+    private Mono<Void> errorResponse(
+            ServerWebExchange exchange,
+            HttpStatus status,
+            String message) {
+
+        ServerHttpResponse response = exchange.getResponse();
+
+        response.setStatusCode(status);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+
+            ApiResponse<Object> apiResponse = ApiResponse.builder()
+                    .success(false)
+                    .message(message)
+                    .data(null)
+                    .error(status.getReasonPhrase())
+                    .status(status.value())
+                    .path(exchange.getRequest().getPath().value())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            byte[] bytes = objectMapper.writeValueAsBytes(apiResponse);
+
+            response.getHeaders().setContentLength(bytes.length);
+
+            DataBuffer buffer = response.bufferFactory().wrap(bytes);
+
+            return response.writeWith(Mono.just(buffer));
+
+        } catch (Exception e) {
+
+            log.error("Failed to write error response", e);
+
+            return response.setComplete();
+        }
+    }
+}

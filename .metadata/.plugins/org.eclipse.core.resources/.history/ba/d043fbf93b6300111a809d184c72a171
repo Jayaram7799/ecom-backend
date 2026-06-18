@@ -1,0 +1,5 @@
+ackage in.btm.entity;
+
+public class UserProfile {
+
+}

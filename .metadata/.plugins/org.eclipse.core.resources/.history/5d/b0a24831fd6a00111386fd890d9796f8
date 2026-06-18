@@ -1,0 +1,120 @@
+package in.btm.controller;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import in.btm.dto.CategoryListResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import in.btm.dto.ApiResponse;
+import in.btm.dto.CategoryRequest;
+import in.btm.dto.CategoryResponse;
+import in.btm.service.CategoryService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/categories")
+public class CategoryController {
+
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
+            @Valid @RequestBody CategoryRequest request,
+            HttpServletRequest httpRequest) {
+
+        CategoryResponse response = categoryService.createCategory(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.<CategoryResponse>builder()
+                        .success(true)
+                        .message("Category created successfully")
+                        .data(response)
+                        .status(HttpStatus.CREATED.value())
+                        .path(httpRequest.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(
+            @PathVariable Integer id,
+            HttpServletRequest httpRequest) {
+
+        CategoryResponse response = categoryService.getCategoryById(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<CategoryResponse>builder()
+                        .success(true)
+                        .message("Category fetched successfully")
+                        .data(response)
+                        .status(HttpStatus.OK.value())
+                        .path(httpRequest.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<CategoryListResponse>> getAllCategories(
+            HttpServletRequest request) {
+
+        CategoryListResponse allCategories =
+                categoryService.getAllCategories();
+
+        return ResponseEntity.ok(
+                ApiResponse.<CategoryListResponse>builder()
+                        .success(true)
+                        .message("Categories fetched successfully")
+                        .data(allCategories)
+                        .status(HttpStatus.OK.value())
+                        .path(request.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
+            @PathVariable Integer id,
+            @Valid @RequestBody CategoryRequest request,
+            HttpServletRequest httpRequest) {
+
+        CategoryResponse response =
+                categoryService.updateCategory(id, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.<CategoryResponse>builder()
+                        .success(true)
+                        .message("Category updated successfully")
+                        .data(response)
+                        .status(HttpStatus.OK.value())
+                        .path(httpRequest.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(
+            @PathVariable Integer id,
+            HttpServletRequest httpRequest) {
+
+        categoryService.deleteCategory(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Category deleted successfully")
+                        .status(HttpStatus.OK.value())
+                        .path(httpRequest.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+}

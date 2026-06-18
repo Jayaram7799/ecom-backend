@@ -1,0 +1,45 @@
+package in.btm.dto;
+
+
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Generic Pagination Response
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductPageResponse implements Serializable {
+
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private List<ProductResponse> content;
+
+    private int page;
+
+    private int size;
+
+    private int totalPages;
+
+    private long totalElements;
+
+    private boolean first;
+
+    private boolean last;
+
+    private int numberOfElements;
+
+    private boolean empty;
+}

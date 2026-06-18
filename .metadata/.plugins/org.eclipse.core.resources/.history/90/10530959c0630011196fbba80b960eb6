@@ -1,0 +1,65 @@
+package in.btm.mapper;
+
+import in.btm.dto.UserDto;
+import in.btm.entity.Address;
+import in.btm.entity.UserProfile;
+import in.btm.enums.UserRole;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2026-06-09T10:30:27+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.5 (Eclipse Adoptium)"
+)
+@Component
+public class UserMapperImpl implements UserMapper {
+
+    @Override
+    public UserProfile toEntity(UserDto dto) {
+        if ( dto == null ) {
+            return null;
+        }
+
+        UserProfile.UserProfileBuilder userProfile = UserProfile.builder();
+
+        userProfile.name( dto.getName() );
+        userProfile.email( dto.getEmail() );
+        userProfile.phone( dto.getPhone() );
+        if ( dto.getRole() != null ) {
+            userProfile.role( Enum.valueOf( UserRole.class, dto.getRole() ) );
+        }
+        userProfile.enabled( dto.isEnabled() );
+        List<Address> list = dto.getAddresses();
+        if ( list != null ) {
+            userProfile.addresses( new ArrayList<Address>( list ) );
+        }
+
+        return userProfile.build();
+    }
+
+    @Override
+    public UserDto toDto(UserProfile user) {
+        if ( user == null ) {
+            return null;
+        }
+
+        UserDto userDto = new UserDto();
+
+        userDto.setName( user.getName() );
+        userDto.setEmail( user.getEmail() );
+        userDto.setPhone( user.getPhone() );
+        if ( user.getRole() != null ) {
+            userDto.setRole( user.getRole().name() );
+        }
+        userDto.setEnabled( user.isEnabled() );
+        List<Address> list = user.getAddresses();
+        if ( list != null ) {
+            userDto.setAddresses( new ArrayList<Address>( list ) );
+        }
+
+        return userDto;
+    }
+}

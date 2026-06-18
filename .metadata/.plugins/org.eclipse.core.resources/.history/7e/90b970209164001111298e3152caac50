@@ -1,0 +1,157 @@
+package in.btm.service;
+
+import java.util.List;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import in.btm.dto.CategoryRequest;
+import in.btm.dto.CategoryResponse;
+import in.btm.entity.Category;
+import in.btm.exception.CategoryAlreadyExistsException;
+import in.btm.exception.CategoryNotFoundException;
+import in.btm.mapper.CategoryMapper;
+import in.btm.repository.CategoryJpaRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional(readOnly = true)
+public class CategoryServiceImpl implements CategoryService {
+
+    private static final String CATEGORY_CACHE = "category";
+    private static final String CATEGORY_LIST_CACHE = "category-list";
+
+    private final CategoryJpaRepository categoryJpaRepository;
+    private final CategoryMapper categoryMapper;
+
+    /**
+     * CREATE CATEGORY
+     */
+    @Override
+    @Transactional
+    @CacheEvict(value = CATEGORY_LIST_CACHE, allEntries = true)
+    public CategoryResponse createCategory(CategoryRequest request) {
+
+        log.info("Creating category: {}", request.getName());
+
+        if (categoryJpaRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new CategoryAlreadyExistsException(
+                    "Category already exists with name: " + request.getName());
+        }
+
+        Category category = categoryMapper.toEntity(request);
+        category.setActive(true);
+
+        Category saved = categoryJpaRepository.save(category);
+
+        return categoryMapper.toResponse(saved);
+    }
+
+    /**
+     * GET CATEGORY BY ID
+     */
+    @Override
+    @Cacheable(
+            value = CATEGORY_CACHE,
+            key = "#id",
+            unless = "#result == null"
+    )
+    public CategoryResponse getCategoryById(Integer id) {
+
+        log.info("Fetching category from DB id={}", id);
+
+        Category category = categoryJpaRepository.findById(id)
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id: " + id));
+
+        if (!category.isActive()) {
+            throw new CategoryNotFoundException(
+                    "Category is inactive with id: " + id);
+        }
+
+        return categoryMapper.toResponse(category);
+    }
+
+    /**
+     * GET ALL CATEGORIES
+     */
+    @Override
+    @Cacheable(
+            value = CATEGORY_LIST_CACHE,
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public List<CategoryResponse> getAllCategories() {
+
+        log.info("Fetching categories from DB");
+
+        return categoryJpaRepository.findAll()
+                .stream()
+                .filter(Category::isActive)
+                .map(categoryMapper::toResponse)
+                .toList();
+    }
+
+    /**
+     * UPDATE CATEGORY
+     */
+    @Override
+    @Transactional
+    @org.springframework.cache.annotation.Caching(
+            evict = {
+                    @CacheEvict(value = CATEGORY_CACHE, key = "#id"),
+                    @CacheEvict(value = CATEGORY_LIST_CACHE, allEntries = true)
+            }
+    )
+    public CategoryResponse updateCategory(
+            Integer id,
+            CategoryRequest request) {
+
+        Category category = categoryJpaRepository.findById(id)
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id: " + id));
+
+        if (categoryJpaRepository.existsByNameIgnoreCase(request.getName())
+                && !category.getName().equalsIgnoreCase(request.getName())) {
+
+            throw new CategoryAlreadyExistsException(
+                    "Category already exists with name: "
+                            + request.getName());
+        }
+
+        categoryMapper.updateCategoryFromDto(request, category);
+
+        Category updated = categoryJpaRepository.save(category);
+
+        return categoryMapper.toResponse(updated);
+    }
+
+    /**
+     * SOFT DELETE
+     */
+    @Override
+    @Transactional
+    @org.springframework.cache.annotation.Caching(
+            evict = {
+                    @CacheEvict(value = CATEGORY_CACHE, key = "#id"),
+                    @CacheEvict(value = CATEGORY_LIST_CACHE, allEntries = true)
+            }
+    )
+    public void deleteCategory(Integer id) {
+
+        Category category = categoryJpaRepository.findById(id)
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(
+                                "Category not found with id: " + id));
+
+        category.setActive(false);
+
+        categoryJpaRepository.save(category);
+    }
+}

@@ -1,0 +1,96 @@
+package in.btm.mapper;
+
+import in.btm.dto.ProductRequest;
+import in.btm.dto.ProductResponse;
+import in.btm.entity.Category;
+import in.btm.entity.Product;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2026-06-09T20:09:33+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
+)
+@Component
+public class ProductMapperImpl implements ProductMapper {
+
+    @Override
+    public Product toEntity(ProductRequest request) {
+        if ( request == null ) {
+            return null;
+        }
+
+        Product product = new Product();
+
+        product.setName( request.getName() );
+        product.setDescription( request.getDescription() );
+        product.setPrice( request.getPrice() );
+        product.setQuantity( request.getQuantity() );
+        product.setImageUrl( request.getImageUrl() );
+        product.setRating( request.getRating() );
+
+        return product;
+    }
+
+    @Override
+    public ProductResponse toResponse(Product product) {
+        if ( product == null ) {
+            return null;
+        }
+
+        ProductResponse.ProductResponseBuilder productResponse = ProductResponse.builder();
+
+        productResponse.categoryName( productCategoryName( product ) );
+        productResponse.id( product.getId() );
+        productResponse.name( product.getName() );
+        productResponse.description( product.getDescription() );
+        productResponse.price( product.getPrice() );
+        productResponse.quantity( product.getQuantity() );
+        productResponse.imageUrl( product.getImageUrl() );
+        productResponse.rating( product.getRating() );
+
+        return productResponse.build();
+    }
+
+    @Override
+    public void updateProductFromDto(ProductRequest request, Product product) {
+        if ( request == null ) {
+            return;
+        }
+
+        if ( request.getName() != null ) {
+            product.setName( request.getName() );
+        }
+        if ( request.getDescription() != null ) {
+            product.setDescription( request.getDescription() );
+        }
+        if ( request.getPrice() != null ) {
+            product.setPrice( request.getPrice() );
+        }
+        if ( request.getQuantity() != null ) {
+            product.setQuantity( request.getQuantity() );
+        }
+        if ( request.getImageUrl() != null ) {
+            product.setImageUrl( request.getImageUrl() );
+        }
+        if ( request.getRating() != null ) {
+            product.setRating( request.getRating() );
+        }
+    }
+
+    private String productCategoryName(Product product) {
+        if ( product == null ) {
+            return null;
+        }
+        Category category = product.getCategory();
+        if ( category == null ) {
+            return null;
+        }
+        String name = category.getName();
+        if ( name == null ) {
+            return null;
+        }
+        return name;
+    }
+}

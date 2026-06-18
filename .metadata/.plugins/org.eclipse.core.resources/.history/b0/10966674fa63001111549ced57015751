@@ -1,0 +1,25 @@
+package in.btm.service;
+
+import in.btm.dto.PageResponse;
+
+public interface ProductService {
+
+    ProductResponse createProduct(ProductRequest request);
+
+    ProductDetailsResponse getProductById(Integer id);
+
+    PageResponse<ProductResponse> getAllProducts(
+            Integer page,
+            Integer size,
+            String sortBy,
+            Integer categoryId,
+            String search,
+            Double rating,
+            Double minPrice,
+            Double maxPrice
+    );
+
+    ProductResponse updateProduct(Integer id, ProductRequest request);
+
+    void deleteProduct(Integer id);
+}

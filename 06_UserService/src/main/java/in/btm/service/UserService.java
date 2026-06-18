@@ -1,0 +1,19 @@
+package in.btm.service;
+
+import java.util.List;
+
+import in.btm.dto.UserDto;
+
+
+public interface UserService {
+	
+	UserDto createUser(UserDto dto);
+
+    UserDto getMyProfile(String username);
+
+    UserDto getUserById(Integer id);
+
+    List<UserDto> getAllUsers();
+
+    void deleteUser(Integer id);
+}

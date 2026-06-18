@@ -1,0 +1,5 @@
+package in.btm.repository;
+
+public interface ProductRepository {
+
+}

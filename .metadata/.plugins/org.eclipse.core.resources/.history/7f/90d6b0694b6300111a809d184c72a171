@@ -1,0 +1,13 @@
+package in.btm.mapper;
+
+
+
+import org.mapstruct.Mapper;
+
+import in.btm.dto.UserResponse;
+
+@Mapper(componentModel = "spring")
+public interface UserMapper {
+
+    UserResponse toDto(User user);
+}

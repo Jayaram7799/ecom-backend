@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: 03_ConfigServer-1
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/Jayaram7799/ecommerce-configurations.git
+          default-label: main
+          clone-on-start: true
+
+  boot:
+    admin:
+      client:
+        url: http://localhost:1111
+
+server:
+  port: 8888
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+info:
+  app:
+    name: Config Server
+    description: Centralized Configuration Server
+    version: 1.0.0

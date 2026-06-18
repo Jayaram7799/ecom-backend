@@ -1,0 +1,102 @@
+package in.btm.controller;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import in.btm.dto.ApiResponse;
+import in.btm.dto.UserDto;
+import in.btm.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserDto>> getMyProfile(
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        UserDto user =
+                userService.getMyProfile(authentication.getName());
+
+        ApiResponse<UserDto> response =
+                ApiResponse.<UserDto>builder()
+                        .message("Profile fetched successfully")
+                        .data(user)
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserDto>> getUserById(
+            @PathVariable Integer id,
+            HttpServletRequest request) {
+
+        UserDto user = userService.getUserById(id);
+
+        ApiResponse<UserDto> response =
+                ApiResponse.<UserDto>builder()
+                        .message("User fetched successfully")
+                        .data(user)
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers(
+            HttpServletRequest request) {
+
+        List<UserDto> users = userService.getAllUsers();
+
+        ApiResponse<List<UserDto>> response =
+                ApiResponse.<List<UserDto>>builder()
+                        .message("Users fetched successfully")
+                        .data(users)
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @PathVariable Integer id,
+            HttpServletRequest request) {
+
+        userService.deleteUser(id);
+
+        ApiResponse<Void> response =
+                ApiResponse.<Void>builder()
+                        .message("User deleted successfully")
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+}

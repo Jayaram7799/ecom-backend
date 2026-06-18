@@ -1,0 +1,123 @@
+package in.btm.controller;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import in.btm.dto.AddressDto;
+import in.btm.dto.ApiResponse;
+import in.btm.service.AddressService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/addresses")
+@RequiredArgsConstructor
+public class AddressController {
+
+    private final AddressService addressService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<AddressDto>> createAddress(
+            @Valid @RequestBody AddressDto dto,
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        AddressDto createdAddress =
+                addressService.addAddress(
+                        authentication.getName(),
+                        dto);
+
+        ApiResponse<AddressDto> response =
+                ApiResponse.<AddressDto>builder()
+                        .message("Address created successfully")
+                        .data(createdAddress)
+                        .status(HttpStatus.CREATED.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<AddressDto>>> getMyAddresses(
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        List<AddressDto> addresses =
+                addressService.getMyAddresses(
+                        authentication.getName());
+
+        ApiResponse<List<AddressDto>> response =
+                ApiResponse.<List<AddressDto>>builder()
+                        .message("Addresses fetched successfully")
+                        .data(addresses)
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<AddressDto>> updateAddress(
+            @PathVariable Integer addressId,
+            @Valid @RequestBody AddressDto dto,
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        AddressDto updatedAddress =
+                addressService.updateAddress(
+                        addressId,
+                        dto,
+                        authentication.getName());
+
+        ApiResponse<AddressDto> response =
+                ApiResponse.<AddressDto>builder()
+                        .message("Address updated successfully")
+                        .data(updatedAddress)
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<Void>> deleteAddress(
+            @PathVariable Integer addressId,
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        addressService.deleteAddress(
+                addressId,
+                authentication.getName());
+
+        ApiResponse<Void> response =
+                ApiResponse.<Void>builder()
+                        .message("Address deleted successfully")
+                        .status(HttpStatus.OK.value())
+                        .timestamp(LocalDateTime.now())
+                        .path(request.getRequestURI())
+                        .build();
+
+        return ResponseEntity.ok(response);
+    }
+}

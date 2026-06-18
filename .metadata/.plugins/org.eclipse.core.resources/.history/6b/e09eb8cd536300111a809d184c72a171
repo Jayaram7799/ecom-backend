@@ -1,0 +1,9 @@
+package in.btm.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import in.btm.entity.Address;
+
+public interface AdressRepository extends JpaRepository<Address, Integer> {
+
+}
