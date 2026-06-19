@@ -1,5 +1,0 @@
-package in.btm.mapper;
-
-public interface productMapper {
-
-}

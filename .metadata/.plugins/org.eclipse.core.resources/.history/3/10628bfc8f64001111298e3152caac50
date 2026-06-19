@@ -1,5 +1,0 @@
-package in.btm.config;
-
-public class RedisConfig {
-
-}
