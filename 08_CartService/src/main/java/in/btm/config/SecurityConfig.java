@@ -29,7 +29,7 @@ public class SecurityConfig {
 
 				.authorizeHttpRequests(auth -> auth
 
-						.requestMatchers("/api/cart/**").hasAnyRole("USER")
+						.requestMatchers("/cart/**").hasAnyRole("USER")
 
 						.anyRequest().authenticated())
 

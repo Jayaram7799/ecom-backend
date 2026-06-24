@@ -27,6 +27,7 @@ public class Category {
     private String name;
 
     private String description;
-
+    
+    @Builder.Default
     private boolean active = true;
 }

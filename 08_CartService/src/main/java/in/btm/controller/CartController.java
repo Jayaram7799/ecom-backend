@@ -59,12 +59,29 @@ public class CartController {
 		return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Cart cleared").status(200)
 				.path(request.getRequestURI()).timestamp(LocalDateTime.now()).build());
 	}
-	
 
 	private ResponseEntity<ApiResponse<CartResponse>> buildSuccess(CartResponse data, String message,
 			HttpServletRequest request) {
 
 		return ResponseEntity.ok(ApiResponse.<CartResponse>builder().success(true).message(message).data(data)
 				.status(HttpStatus.OK.value()).path(request.getRequestURI()).timestamp(LocalDateTime.now()).build());
+	}
+
+	@PutMapping("/items/increment")
+	public ResponseEntity<ApiResponse<CartResponse>> incrementQuantity(HttpServletRequest request,
+			Authentication authentication, @RequestParam Integer productId) {
+
+		String email = authentication.getName();
+
+		return buildSuccess(cartService.incrementQuantity(email, productId), "Quantity increased", request);
+	}
+
+	@PutMapping("/items/decrement")
+	public ResponseEntity<ApiResponse<CartResponse>> decrementQuantity(HttpServletRequest request,
+			Authentication authentication, @RequestParam Integer productId) {
+
+		String email = authentication.getName();
+
+		return buildSuccess(cartService.decrementQuantity(email, productId), "Quantity decreased", request);
 	}
 }

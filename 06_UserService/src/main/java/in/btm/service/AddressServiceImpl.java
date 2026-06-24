@@ -43,7 +43,20 @@ public class AddressServiceImpl implements AddressService {
 
 		UserProfile user = getUserByUsername(username);
 
-		return user.getAddresses().stream().map(addressMapper::toDto).toList();
+		return user.getAddresses()
+	            .stream()
+	            .map(address -> {
+
+	                AddressDto dto = addressMapper.toDto(address);
+
+	                dto.setName(
+	                        user.getName());
+
+	                dto.setPhone(user.getPhone());
+
+	                return dto;
+	            })
+	            .toList();
 	}
 
 	@Override

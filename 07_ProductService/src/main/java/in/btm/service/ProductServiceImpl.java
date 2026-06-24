@@ -106,71 +106,68 @@ public class ProductServiceImpl implements ProductService {
 
 	@Override
 	@Cacheable(
-			value = PRODUCT_PAGE_CACHE,
-			key = "T(java.lang.String).format('%s-%s-%s-%s-%s-%s-%s-%s'," +
-					"#page,#size,#sortBy,#categoryId," +
-					"#search,#rating,#minPrice,#maxPrice)"
+	        value = PRODUCT_PAGE_CACHE,
+	        key = "T(java.lang.String).format('%s-%s-%s-%s-%s-%s-%s-%s',"
+	                + "#page,#size,#sortBy,#categoryId,"
+	                + "#search,#rating,#minPrice,#maxPrice)"
 	)
 	public ProductPageResponse getAllProducts(
-			Integer page,
-			Integer size,
-			String sortBy,
-			Integer categoryId,
-			String search,
-			Double rating,
-			Double minPrice,
-			Double maxPrice) {
+	        Integer page,
+	        Integer size,
+	        String sortBy,
+	        Integer categoryId,
+	        String search,
+	        Double rating,
+	        Double minPrice,
+	        Double maxPrice) {
 
-		log.info(
-				"FETCHING PRODUCTS FROM DATABASE page={}, size={}, categoryId={}, search={}",
-				page, size, categoryId, search);
+	    log.info(
+	            "FETCHING PRODUCTS FROM DATABASE page={}, size={}, categoryId={}, search={}",
+	            page, size, categoryId, search);
 
-		Pageable pageable =
-				PageRequest.of(page, size, buildSort(sortBy));
+	    Pageable pageable = PageRequest.of(page, size, buildSort(sortBy));
 
-		Specification<Product> spec =
-				Specification.where(ProductSpecification.isActive());
+	    // Base specification
+	    Specification<Product> spec = ProductSpecification.isActive();
 
-		if (categoryId != null) {
-			spec = spec.and(ProductSpecification.hasCategory(categoryId));
-		}
+	    if (categoryId != null) {
+	        spec = spec.and(ProductSpecification.hasCategory(categoryId));
+	    }
 
-		if (search != null && !search.isBlank()) {
-			spec = spec.and(ProductSpecification.titleContains(search));
-		}
+	    if (search != null && !search.isBlank()) {
+	        spec = spec.and(ProductSpecification.titleContains(search));
+	    }
 
-		if (rating != null) {
-			spec = spec.and(ProductSpecification.hasRating(rating));
-		}
+	    if (rating != null) {
+	        spec = spec.and(ProductSpecification.hasRating(rating));
+	    }
 
-		if (minPrice != null) {
-			spec = spec.and(ProductSpecification.minPrice(minPrice));
-		}
+	    if (minPrice != null) {
+	        spec = spec.and(ProductSpecification.minPrice(minPrice));
+	    }
 
-		if (maxPrice != null) {
-			spec = spec.and(ProductSpecification.maxPrice(maxPrice));
-		}
+	    if (maxPrice != null) {
+	        spec = spec.and(ProductSpecification.maxPrice(maxPrice));
+	    }
 
-		Page<Product> result =
-				productRepository.findAll(spec, pageable);
+	    Page<Product> result = productRepository.findAll(spec, pageable);
 
-		List<ProductResponse> content =
-				result.getContent()
-						.stream()
-						.map(productMapper::toResponse)
-						.toList();
+	    List<ProductResponse> content = result.getContent()
+	            .stream()
+	            .map(productMapper::toResponse)
+	            .toList();
 
-		return ProductPageResponse.builder()
-				.content(content)
-				.page(result.getNumber())
-				.size(result.getSize())
-				.totalPages(result.getTotalPages())
-				.totalElements(result.getTotalElements())
-				.first(result.isFirst())
-				.last(result.isLast())
-				.numberOfElements(result.getNumberOfElements())
-				.empty(result.isEmpty())
-				.build();
+	    return ProductPageResponse.builder()
+	            .content(content)
+	            .page(result.getNumber())
+	            .size(result.getSize())
+	            .totalPages(result.getTotalPages())
+	            .totalElements(result.getTotalElements())
+	            .first(result.isFirst())
+	            .last(result.isLast())
+	            .numberOfElements(result.getNumberOfElements())
+	            .empty(result.isEmpty())
+	            .build();
 	}
 
 	@Override

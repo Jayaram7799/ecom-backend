@@ -11,11 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthResponse {
 
-    private String accessToken;
+	private String accessToken;
 
-    private String tokenType;
+	private String tokenType;
 
-    private String email;
+	private Integer userId;
 
-    private String role;
+	private String email;
+
+	private String role;
 }

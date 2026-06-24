@@ -40,9 +40,11 @@ public class UserProfile {
 	private UserRole role;
 
 	@Column(nullable = false)
+	@Builder.Default
 	private boolean enabled = true;
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
 
 	@CreationTimestamp

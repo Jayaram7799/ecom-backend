@@ -1,3 +1,4 @@
+
 package in.btm.service;
 
 import in.btm.dto.ApiResponse;
@@ -7,6 +8,10 @@ import in.btm.dto.ProductDto;
 import in.btm.dto.ProductResponse;
 import in.btm.entity.Cart;
 import in.btm.entity.CartItem;
+import in.btm.exception.CartItemNotFoundException;
+import in.btm.exception.InsufficientStockException;
+import in.btm.exception.InvalidQuantityException;
+import in.btm.exception.ProductFetchException;
 import in.btm.mapper.CartMapper;
 import in.btm.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,23 +41,26 @@ public class CartServiceImpl implements CartService {
 
 		ProductDto product = fetchProduct(productId);
 
-		validateStock(product, quantity);
-
 		CartItem item = findCartItem(cart, productId);
 
 		if (item == null) {
 
+			validateStock(product, quantity);
+
 			item = createCartItem(product, quantity);
+
 			cart.getItems().add(item);
 
 		} else {
 
-			// refresh latest product snapshot
+			int newQuantity = item.getQuantity() + quantity;
+
+			validateStock(product, newQuantity);
+
 			item.setName(product.getName());
 			item.setImageUrl(product.getImageUrl());
 			item.setPrice(product.getPrice());
-
-			item.setQuantity(item.getQuantity() + quantity);
+			item.setQuantity(newQuantity);
 
 			updateSubTotal(item);
 		}
@@ -66,7 +75,7 @@ public class CartServiceImpl implements CartService {
 	@Override
 	public CartResponse removeItem(String email, Integer productId) {
 
-		Cart cart = getExistingCart(email);
+		Cart cart = getOrCreateCart(email);
 
 		cart.getItems().removeIf(item -> item.getProductId().equals(productId));
 
@@ -80,9 +89,7 @@ public class CartServiceImpl implements CartService {
 	@Override
 	public CartResponse getCart(String email) {
 
-		Cart cart = getExistingCart(email);
-
-		return buildCartResponse(cart);
+		return buildCartResponse(getOrCreateCart(email));
 	}
 
 	@Override
@@ -93,30 +100,79 @@ public class CartServiceImpl implements CartService {
 		log.info("Cart cleared for user={}", email);
 	}
 
-// =====================================================
-// PRIVATE METHODS
-// =====================================================
+	@Override
+	public CartResponse incrementQuantity(String email, Integer productId) {
+
+		Cart cart = getOrCreateCart(email);
+
+		CartItem item = findCartItem(cart, productId);
+
+		if (item == null) {
+			throw new CartItemNotFoundException(productId);
+		}
+
+		ProductDto product = fetchProduct(productId);
+
+		int newQuantity = item.getQuantity() + 1;
+
+		validateStock(product, newQuantity);
+
+		item.setQuantity(newQuantity);
+
+		updateSubTotal(item);
+
+		updateCart(cart);
+
+		return buildCartResponse(cart);
+	}
+
+	@Override
+	public CartResponse decrementQuantity(String email, Integer productId) {
+
+		Cart cart = getOrCreateCart(email);
+
+		CartItem item = findCartItem(cart, productId);
+
+		if (item == null) {
+			throw new CartItemNotFoundException(productId);
+		}
+
+		if (item.getQuantity() <= 1) {
+
+			cart.getItems().remove(item);
+
+		} else {
+
+			item.setQuantity(item.getQuantity() - 1);
+
+			updateSubTotal(item);
+		}
+
+		updateCart(cart);
+
+		return buildCartResponse(cart);
+	}
+
+	// =====================================================
+	// PRIVATE METHODS
+	// =====================================================
 
 	private Cart getOrCreateCart(String email) {
 
-		return java.util.Optional.ofNullable(cartRepository.get(email)).orElseGet(() -> {
-
-			Cart cart = new Cart();
-
-			cart.setEmail(email);
-			cart.setItems(new ArrayList<>());
-			cart.setTotalItems(0);
-			cart.setTotalPrice(BigDecimal.ZERO);
-			cart.setCreatedAt(LocalDateTime.now());
-
-			return cart;
-		});
+		return Optional.ofNullable(cartRepository.get(email)).orElseGet(() -> createEmptyCart(email));
 	}
 
-	private Cart getExistingCart(String email) {
+	private Cart createEmptyCart(String email) {
 
-		return java.util.Optional.ofNullable(cartRepository.get(email))
-				.orElseThrow(() -> new RuntimeException("Cart not found for user: " + email));
+		Cart cart = new Cart();
+
+		cart.setEmail(email);
+		cart.setItems(new ArrayList<>());
+		cart.setTotalItems(0);
+		cart.setTotalPrice(BigDecimal.ZERO);
+		cart.setCreatedAt(LocalDateTime.now());
+
+		return cart;
 	}
 
 	private ProductDto fetchProduct(Integer productId) {
@@ -133,8 +189,6 @@ public class CartServiceImpl implements CartService {
 			dto.setName(product.getName());
 			dto.setImageUrl(product.getImageUrl());
 			dto.setPrice(product.getPrice());
-
-			// if ProductDto contains stock
 			dto.setStock(product.getQuantity());
 
 			return dto;
@@ -143,7 +197,7 @@ public class CartServiceImpl implements CartService {
 
 			log.error("Failed to fetch product {}", productId, ex);
 
-			throw new RuntimeException("Unable to fetch product: " + productId);
+			throw new ProductFetchException(productId);
 		}
 	}
 
@@ -205,17 +259,15 @@ public class CartServiceImpl implements CartService {
 	private void validateQuantity(Integer quantity) {
 
 		if (quantity == null || quantity <= 0) {
-
-			throw new IllegalArgumentException("Quantity must be greater than zero");
+			throw new InvalidQuantityException();
 		}
 	}
 
-	private void validateStock(ProductDto product, Integer quantity) {
+	private void validateStock(ProductDto product, Integer requestedQty) {
 
-		if (product.getStock() < quantity) {
+		if (product.getStock() < requestedQty) {
 
-			throw new RuntimeException("Insufficient stock available");
+			throw new InsufficientStockException(product.getName(), product.getStock(), requestedQty);
 		}
 	}
-
 }

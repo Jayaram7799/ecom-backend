@@ -34,14 +34,14 @@ public class JwtUtil {
 	// Generate Token
 	// ==========================
 
-	public String generateToken(String email, String role) {
+	public String generateToken(Integer userId, String email, String role) {
 
 		Date now = new Date();
 
 		Date expiryDate = new Date(now.getTime() + expiration);
 
-		return Jwts.builder().subject(email).claim("role", role).issuedAt(now).expiration(expiryDate)
-				.signWith(getSigningKey()).compact();
+		return Jwts.builder().subject(email).claim("userId", userId).claim("role", role).issuedAt(now)
+				.expiration(expiryDate).signWith(getSigningKey()).compact();
 	}
 
 	// ==========================
@@ -60,6 +60,21 @@ public class JwtUtil {
 	public String extractEmail(String token) {
 
 		return extractAllClaims(token).getSubject();
+	}
+
+	// ==========================
+	// Extract UserId
+	// ==========================
+
+	public Integer extractUserId(String token) {
+
+		Object value = extractAllClaims(token).get("userId");
+
+		if (value instanceof Integer) {
+			return (Integer) value;
+		}
+
+		return ((Number) value).intValue();
 	}
 
 	// ==========================
@@ -106,17 +121,17 @@ public class JwtUtil {
 
 			return claims.getExpiration().after(new Date());
 
-		} catch (ExpiredJwtException e) {
+		} catch (ExpiredJwtException ex) {
 
 			log.warn("JWT expired");
 
-		} catch (JwtException e) {
+		} catch (JwtException ex) {
 
-			log.warn("Invalid JWT: {}", e.getMessage());
+			log.warn("Invalid JWT: {}", ex.getMessage());
 
-		} catch (Exception e) {
+		} catch (Exception ex) {
 
-			log.error("JWT validation error", e);
+			log.error("JWT validation error", ex);
 		}
 
 		return false;

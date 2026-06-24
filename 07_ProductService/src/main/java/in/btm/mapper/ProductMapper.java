@@ -16,6 +16,11 @@ public interface ProductMapper {
 	/**
 	 * Request -> Entity
 	 */
+	@Mapping(target = "id", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
 	Product toEntity(ProductRequest request);
 
 	/**

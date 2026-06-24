@@ -93,6 +93,7 @@ public class AuthServiceImpl implements AuthService {
 				.orElseThrow(() -> new EmailNotRegisteredException("Email not registered"));
 
 		if (user.getStatus() != AccountStatus.ACTIVE) {
+
 			throw new AccountNotActivatedException("Account not activated");
 		}
 
@@ -101,9 +102,9 @@ public class AuthServiceImpl implements AuthService {
 			throw new InvalidTemporaryPasswordException("Invalid credentials");
 		}
 
-		String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+		String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
 
-		return AuthResponse.builder().accessToken(token).tokenType("Bearer").email(user.getEmail())
+		return AuthResponse.builder().accessToken(token).tokenType("Bearer").userId(user.getId()).email(user.getEmail())
 				.role(user.getRole().name()).build();
 	}
 
@@ -134,43 +135,31 @@ public class AuthServiceImpl implements AuthService {
 
 		return authRepository.existsByEmail(email);
 	}
-	
-	
+
 	@Override
 	public void resetPassword(ResetPasswordRequest request) {
 
-	    AuthUser user = authRepository
-	            .findByResetToken(request.getToken())
-	            .orElseThrow(() ->
-	                    new InvalidResetTokenException(
-	                            "Invalid reset token"));
+		AuthUser user = authRepository.findByResetToken(request.getToken())
+				.orElseThrow(() -> new InvalidResetTokenException("Invalid reset token"));
 
-	    if (user.getResetTokenExpiry() == null
-	            || user.getResetTokenExpiry()
-	                    .isBefore(LocalDateTime.now())) {
+		if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
 
-	        throw new InvalidResetTokenException(
-	                "Reset token expired");
-	    }
+			throw new InvalidResetTokenException("Reset token expired");
+		}
 
-	    if (!request.getNewPassword()
-	            .equals(request.getConfirmPassword())) {
+		if (!request.getNewPassword().equals(request.getConfirmPassword())) {
 
-	        throw new PasswordMismatchException(
-	                "Passwords do not match");
-	    }
+			throw new PasswordMismatchException("Passwords do not match");
+		}
 
-	    user.setPassword(
-	            passwordEncoder.encode(
-	                    request.getNewPassword()));
+		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
-	    user.setResetToken(null);
-	    user.setResetTokenExpiry(null);
+		user.setResetToken(null);
+		user.setResetTokenExpiry(null);
 
-	    authRepository.save(user);
+		authRepository.save(user);
 
-	    log.info("Password reset successful for: {}",
-	            user.getEmail());
+		log.info("Password reset successful for: {}", user.getEmail());
 	}
 
 	private static String generatePassword(int length) {

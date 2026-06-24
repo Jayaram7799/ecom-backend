@@ -23,7 +23,6 @@ import in.btm.dto.ApiResponse;
 import in.btm.util.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -36,35 +35,36 @@ public class GatewayAuthFilter implements GlobalFilter {
 	private static final Logger log = LoggerFactory.getLogger(GatewayAuthFilter.class);
 
 	private final JwtUtil jwtUtil;
+
 	private final ObjectMapper objectMapper;
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
 		String path = exchange.getRequest().getURI().getPath();
+
 		String method = exchange.getRequest().getMethod().name();
 
-		log.info("Request: {} {}", method, path);
+		log.info("Incoming Request : {} {}", method, path);
 
 		AntPathMatcher matcher = new AntPathMatcher();
 
 		List<String> publicUrls = List.of("/auth/**", "/api/users", "/users/*/activate");
 
-		// Allow CORS preflight requests
+		// Allow OPTIONS
 		if ("OPTIONS".equalsIgnoreCase(method)) {
 			return chain.filter(exchange);
 		}
 
-		// Allow public endpoints
+		// Public Endpoints
 		if (publicUrls.stream().anyMatch(pattern -> matcher.match(pattern, path))) {
+
 			return chain.filter(exchange);
 		}
 
 		String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
-			log.warn("Missing Authorization header");
 
 			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
 		}
@@ -73,53 +73,39 @@ public class GatewayAuthFilter implements GlobalFilter {
 
 		try {
 
-			jwtUtil.validateToken(token);
+			if (!jwtUtil.validateToken(token)) {
+
+				return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
+			}
+
+			Integer userId = jwtUtil.extractUserId(token);
 
 			String email = jwtUtil.extractEmail(token);
+
 			String role = jwtUtil.extractRole(token);
 
-			log.info("Authenticated User: {} Role: {}", email, role);
+			log.info("Authenticated User -> userId={}, email={}, role={}", userId, email, role);
 
-			ServerHttpRequest request = exchange.getRequest().mutate().header("X-User-Email", email)
-					.header("X-User-Role", role).build();
-			log.info("Forwarding request to downstream service");
+			ServerHttpRequest request = exchange.getRequest().mutate().header("X-User-Id", String.valueOf(userId))
+					.header("X-User-Email", email).header("X-User-Role", role).build();
 
-			return chain.filter(exchange.mutate().request(request).build()).then(Mono.fromRunnable(() -> {
-
-				HttpStatus status = (HttpStatus) exchange.getResponse().getStatusCode();
-
-				log.info("Downstream Response Status : {}", status);
-			}));
+			return chain.filter(exchange.mutate().request(request).build());
 
 		} catch (ExpiredJwtException ex) {
 
-			log.warn("JWT token expired");
+			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "JWT token expired");
 
-			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "JWT token has expired");
-
-		} catch (SignatureException ex) {
-
-			log.warn("Invalid JWT signature");
+		} catch (SecurityException ex) {
 
 			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "Invalid JWT signature");
 
 		} catch (MalformedJwtException ex) {
 
-			log.warn("Malformed JWT token");
-
 			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "Malformed JWT token");
 
 		} catch (UnsupportedJwtException ex) {
 
-			log.warn("Unsupported JWT token");
-
 			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "Unsupported JWT token");
-
-		} catch (IllegalArgumentException ex) {
-
-			log.warn("JWT claims string is empty");
-
-			return errorResponse(exchange, HttpStatus.UNAUTHORIZED, "JWT token is empty");
 
 		} catch (Exception ex) {
 
@@ -134,25 +120,24 @@ public class GatewayAuthFilter implements GlobalFilter {
 		ServerHttpResponse response = exchange.getResponse();
 
 		response.setStatusCode(status);
+
 		response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
 		try {
 
-			ApiResponse<Object> apiResponse = ApiResponse.builder().success(false).message(message).data(null)
+			ApiResponse<Object> apiResponse = ApiResponse.builder().success(false).message(message)
 					.error(status.getReasonPhrase()).status(status.value())
 					.path(exchange.getRequest().getPath().value()).timestamp(LocalDateTime.now()).build();
 
-			byte[] bytes = objectMapper.writeValueAsBytes(apiResponse);
+			byte[] body = objectMapper.writeValueAsBytes(apiResponse);
 
-			response.getHeaders().setContentLength(bytes.length);
-
-			DataBuffer buffer = response.bufferFactory().wrap(bytes);
+			DataBuffer buffer = response.bufferFactory().wrap(body);
 
 			return response.writeWith(Mono.just(buffer));
 
-		} catch (Exception e) {
+		} catch (Exception ex) {
 
-			log.error("Failed to write error response", e);
+			log.error("Failed to write error response", ex);
 
 			return response.setComplete();
 		}

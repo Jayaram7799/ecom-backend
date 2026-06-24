@@ -7,9 +7,9 @@ public class AddressDto {
 
     private Long id;
 
-    private String fullName;
+    private String name;
 
-    private String phoneNumber;
+    private String phone;
 
     private String street;
 
