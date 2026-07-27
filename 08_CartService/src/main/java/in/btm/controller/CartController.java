@@ -1,6 +1,7 @@
 package in.btm.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -83,5 +84,25 @@ public class CartController {
 		String email = authentication.getName();
 
 		return buildSuccess(cartService.decrementQuantity(email, productId), "Quantity decreased", request);
+	}
+	
+	@DeleteMapping("/items/purchased")
+	public ResponseEntity<ApiResponse<CartResponse>> removePurchasedItems(
+	        @RequestBody List<Integer> productIds,
+	        Authentication authentication) {
+
+	    String email = authentication.getName();
+
+	    CartResponse cart = cartService.removePurchasedItems(email, productIds);
+
+	    return ResponseEntity.ok(
+	            ApiResponse.<CartResponse>builder()
+	                    .success(true)
+	                    .message("Purchased items removed successfully")
+	                    .data(cart)
+	                    .status(HttpStatus.OK.value())
+	                    .timestamp(LocalDateTime.now())
+	                    .build()
+	    );
 	}
 }

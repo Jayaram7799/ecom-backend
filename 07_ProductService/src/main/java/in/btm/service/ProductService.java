@@ -2,6 +2,7 @@ package in.btm.service;
 
 
 import in.btm.dto.ProductDetailsResponse;
+import in.btm.dto.ProductInternalResponse;
 import in.btm.dto.ProductPageResponse;
 import in.btm.dto.ProductRequest;
 import in.btm.dto.ProductResponse;
@@ -18,4 +19,5 @@ public interface ProductService {
 	ProductResponse updateProduct(Integer id, ProductRequest request);
 
 	void deleteProduct(Integer id);
+	ProductInternalResponse getProductForOrder(Integer id);
 }

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import in.btm.dto.ProductDetailsResponse;
+import in.btm.dto.ProductInternalResponse;
 import in.btm.dto.ProductRequest;
 import in.btm.dto.ProductResponse;
 import in.btm.entity.Category;
@@ -227,6 +228,22 @@ public class ProductServiceImpl implements ProductService {
 		log.info("Product deleted successfully. id={}", id);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public ProductInternalResponse getProductForOrder(Integer id) {
+
+	    Product product = productRepository.findById(id)
+	            .orElseThrow(() -> new ProductNotFoundException("Product Not Found "+id));
+
+	    return ProductInternalResponse.builder()
+	            .id(product.getId())
+	            .name(product.getName())
+	            .price(product.getPrice())
+	            .availableQuantity(product.getQuantity())
+	           
+	            .build();
+	}
+	
 	private Sort buildSort(String sortBy) {
 
 		if (sortBy == null || sortBy.isBlank()) {

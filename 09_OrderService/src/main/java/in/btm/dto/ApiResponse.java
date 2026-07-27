@@ -19,12 +19,11 @@ public class ApiResponse<T> {
 
     private T data;
 
-    private String error;
+    private Object error;
 
-    private Integer status;
+    private int status;
 
     private String path;
 
-    @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp;
 }

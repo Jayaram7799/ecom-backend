@@ -6,6 +6,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import in.btm.entity.Order;
+import in.btm.enums.PaymentStatus;
+import in.btm.exception.OrderNotFoundException;
 import in.btm.repository.OrderRepository;
 import in.btm.kafka.event.PaymentInitiatedEvent;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +23,18 @@ public class PaymentInitiatedConsumer {
 	@KafkaListener(topics = "payment-initiated", groupId = "order-group-v2")
 	public void consume(PaymentInitiatedEvent event) {
 
-		log.info("Received PaymentInitiatedEvent : {}", event);
+	    log.info("Received PaymentInitiatedEvent : {}", event);
 
-		Order order = orderRepository.findById(event.getOrderId())
-				.orElseThrow(() -> new RuntimeException("Order not found"));
+	    Order order = orderRepository.findById(event.getOrderId())
+	            .orElseThrow(() ->
+	                    new OrderNotFoundException(event.getOrderId()));
 
-		order.setRazorpayOrderId(event.getRazorpayOrderId());
+	    order.setRazorpayOrderId(event.getRazorpayOrderId());
+	    order.setPaymentStatus(PaymentStatus.PENDING);
 
-		orderRepository.save(order);
+	    orderRepository.save(order);
 
-		log.info("Order updated with RazorpayOrderId : {}", event.getRazorpayOrderId());
+	    log.info("Order updated with RazorpayOrderId : {}",
+	            event.getRazorpayOrderId());
 	}
 }

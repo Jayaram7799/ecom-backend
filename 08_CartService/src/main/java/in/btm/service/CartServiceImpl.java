@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -151,6 +152,26 @@ public class CartServiceImpl implements CartService {
 		updateCart(cart);
 
 		return buildCartResponse(cart);
+	}
+	
+	
+	@Override
+	public CartResponse removePurchasedItems(String email, List<Integer> productIds) {
+
+	    Cart cart = cartRepository.get(email);
+
+	    if (cart == null) {
+	        throw new RuntimeException("Cart not found");
+	    }
+
+	    cart.getItems().removeIf(item ->
+	            productIds.contains(item.getProductId()));
+
+	    recalculateTotals(cart);
+
+	    cartRepository.save(cart);
+
+	    return cartMapper.toResponse(cart);
 	}
 
 	// =====================================================

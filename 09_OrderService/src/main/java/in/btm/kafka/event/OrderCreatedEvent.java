@@ -12,7 +12,7 @@ public class OrderCreatedEvent {
 
     private Long orderId;
 
-    private Integer customerId;
+    private String email;
 
     private BigDecimal totalAmount;
 }

@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import in.btm.dto.CreatePaymentRequest;
 import in.btm.dto.PaymentVerificationRequest;
+import in.btm.dto.PaymentVerificationResponse;
 import in.btm.dto.RazorpayOrderResponse;
 import in.btm.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class PaymentController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.createPayment(request));
 	}
 
+	
 	@GetMapping("/order/{orderId}")
 	public ResponseEntity<RazorpayOrderResponse> getPaymentByOrderId(@PathVariable Long orderId) {
 
@@ -30,10 +32,16 @@ public class PaymentController {
 	}
 
 	@PostMapping("/verify")
-	public ResponseEntity<String> verifyPayment(@RequestBody PaymentVerificationRequest request) {
+	public ResponseEntity<PaymentVerificationResponse> verifyPayment(
+	        @RequestBody PaymentVerificationRequest request) {
 
-		paymentService.verifyPayment(request);
+	    paymentService.verifyPayment(request);
 
-		return ResponseEntity.ok("Payment Verified Successfully");
+	    return ResponseEntity.ok(
+	        new PaymentVerificationResponse(
+	            "SUCCESS",
+	            "Payment Verified Successfully"
+	        )
+	    );
 	}
 }

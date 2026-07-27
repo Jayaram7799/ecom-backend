@@ -9,11 +9,11 @@ import in.btm.entity.Order;
 
 public interface OrderService {
 
-	OrderResponse createOrder(CreateOrderRequest request, Integer userId);
+	OrderResponse createOrder(CreateOrderRequest request, String email);
 
 	Order getOrderById(Long orderId);
 
-	List<Order> getOrdersByCustomerId(Integer customerId);
+	List<Order> getOrdersByEmail(String email);
 
 	List<Order> getAllOrders();
 

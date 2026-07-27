@@ -17,6 +17,7 @@ import in.btm.dto.PaymentVerificationRequest;
 import in.btm.dto.RazorpayOrderResponse;
 import in.btm.entity.Payment;
 import in.btm.enums.PaymentStatus;
+import in.btm.exceptions.PaymentNotReadyException;
 import in.btm.kafka.event.PaymentFailedEvent;
 import in.btm.kafka.event.PaymentInitiatedEvent;
 import in.btm.kafka.event.PaymentSuccessEvent;
@@ -148,10 +149,14 @@ public class PaymentServiceImpl implements PaymentService {
 	@Transactional(readOnly = true)
 	public RazorpayOrderResponse getPaymentByOrderId(Long orderId) {
 
-		Payment payment = paymentRepository.findByOrderId(orderId)
-				.orElseThrow(() -> new RuntimeException("Payment not found"));
+	    Payment payment = paymentRepository.findByOrderId(orderId)
+	            .orElseThrow(() -> new PaymentNotReadyException(orderId));
 
-		return RazorpayOrderResponse.builder().razorpayOrderId(payment.getRazorpayOrderId()).amount(payment.getAmount())
-				.currency("INR").key(razorpayConfig.getKeyId()).build();
+	    return RazorpayOrderResponse.builder()
+	            .razorpayOrderId(payment.getRazorpayOrderId())
+	            .amount(payment.getAmount())
+	            .currency("INR")
+	            .key(razorpayConfig.getKeyId())
+	            .build();
 	}
 }

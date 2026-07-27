@@ -17,56 +17,65 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "orders", indexes = { @Index(name = "idx_order_number", columnList = "orderNumber"),
-		@Index(name = "idx_user_id", columnList = "userId") })
+@Table(
+    name = "orders",
+    indexes = {
+        @Index(name = "idx_order_number", columnList = "orderNumber"),
+        @Index(name = "idx_email", columnList = "email")
+    }
+)
 @Getter
 @Setter
 public class Order {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long orderId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long orderId;
 
-	@Column(nullable = false, unique = true, length = 50)
-	private String orderNumber;
+    @Column(nullable = false, unique = true, length = 50)
+    private String orderNumber;
 
-	@Column(nullable = false)
-	private Integer userId;
+    @Column(nullable = false, length = 100)
+    private String email;
 
-	@Column(nullable = false)
-	private Long shippingAddressId;
+    @Column(nullable = false)
+    private Long shippingAddressId;
 
-	@Column(nullable = false, precision = 12, scale = 2)
-	private BigDecimal totalAmount;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalAmount;
 
-	@Column(nullable = false)
-	private Integer totalQuantity;
+    @Column(nullable = false)
+    private Integer totalQuantity;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private OrderStatus orderStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderStatus orderStatus;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private PaymentStatus paymentStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus;
 
-	@Column(length = 100)
-	private String razorpayOrderId;
+    @Column(length = 100)
+    private String razorpayOrderId;
 
-	@Column(length = 100)
-	private String razorpayPaymentId;
+    @Column(length = 100)
+    private String razorpayPaymentId;
 
-	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-	@JsonIgnore
-	private List<OrderItem> orderItems = new ArrayList<>();
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
+    private List<OrderItem> orderItems = new ArrayList<>();
 
-	@Version
-	private Long version;
+    @Version
+    private Long version;
 
-	@CreationTimestamp
-	@Column(updatable = false)
-	private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-	@UpdateTimestamp
-	private LocalDateTime updatedAt;
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

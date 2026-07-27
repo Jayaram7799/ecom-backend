@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import in.btm.dto.ApiResponse;
@@ -22,26 +23,20 @@ public class OrderController {
 	private final OrderService orderService;
 
 	@PostMapping
-	public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request,
+	public ResponseEntity<OrderResponse> createOrder(
+	        @RequestBody CreateOrderRequest request,
+	        Authentication authentication) {
 
-			@RequestHeader(value = "X-User-Id", required = false) Integer customerId) {
+	    OrderResponse response = orderService.createOrder(request, authentication.getName());
 
-		/*
-		 * Later Gateway will send X-User-Id. Temporary fallback for testing.
-		 */
-		if (customerId == null) {
-			customerId = 1;
-		}
-
-		OrderResponse response = orderService.createOrder(request, customerId);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	    return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
+	
 
-	@GetMapping("/customer/{customerId}")
-	public ResponseEntity<List<Order>> getOrdersByCustomerId(@PathVariable Integer customerId) {
+	@GetMapping("/customer")
+	public ResponseEntity<List<Order>> getOrdersByCustomerId(Authentication authentication) {
 
-		return ResponseEntity.ok(orderService.getOrdersByCustomerId(customerId));
+		return ResponseEntity.ok(orderService.getOrdersByEmail(authentication.getName()));
 	}
 
 	@GetMapping

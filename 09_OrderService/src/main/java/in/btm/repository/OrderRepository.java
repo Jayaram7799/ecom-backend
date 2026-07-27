@@ -10,13 +10,14 @@ import in.btm.entity.Order;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-	List<Order> findByUserId(Integer customerId);
+    List<Order> findByEmail(String email);
 
-	@Query("""
-			SELECT o
-			FROM Order o
-			LEFT JOIN FETCH o.orderItems
-			WHERE o.orderId = :orderId
-			""")
-	Optional<Order> findOrderWithItems(Long orderId);
+    @Query("""
+            SELECT o
+            FROM Order o
+            LEFT JOIN FETCH o.orderItems
+            WHERE o.orderId = :orderId
+            """)
+    Optional<Order> findOrderWithItems(Long orderId);
+
 }
