@@ -56,10 +56,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-		</dependency>
+		
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -81,6 +78,7 @@
 	</dependencyManagement>
 
 	<build>
+	<finalName>AdminServer</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
