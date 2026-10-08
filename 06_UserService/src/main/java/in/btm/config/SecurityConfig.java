@@ -26,6 +26,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
         		.requestMatchers("/api/users").permitAll()
+        		.requestMatchers("/api/users/create").permitAll()
                 .requestMatchers("/api/addresses/me").authenticated()
                 .requestMatchers("/users/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated()

@@ -1,0 +1,155 @@
+services:
+
+  # =========================================================
+  # 1. SERVICE REGISTRY - EUREKA
+  # =========================================================
+  serviceregistry:
+    image: service-registry:1.0
+    container_name: serviceregistry
+    ports:
+      - "8761:8761"
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 2. ADMIN SERVER
+  # =========================================================
+  admin-server:
+    image: admin-server:1.0
+    container_name: admin-server
+    ports:
+      - "1111:1111"
+    depends_on:
+      - serviceregistry
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 3. CONFIG SERVER
+  # =========================================================
+  config-server:
+    image: config-server:1.0
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      - serviceregistry
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 4. API GATEWAY
+  # =========================================================
+  api-gateway:
+    image: api-gateway:1.0
+    container_name: api-gateway
+    ports:
+      - "9090:9090"
+    depends_on:
+      - serviceregistry
+      - config-server
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 5. AUTHENTICATION SERVICE
+  # =========================================================
+  authentication-service:
+    image: authentication-service:1.0
+    container_name: authentication-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - serviceregistry
+      - config-server
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 6. USER SERVICE
+  # =========================================================
+  user-service:
+    image: user-service:1.0
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - serviceregistry
+      - config-server
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 7. PRODUCT SERVICE
+  # =========================================================
+  product-service:
+    image: product-service:1.0
+    container_name: product-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - serviceregistry
+      - config-server
+      - redis
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # 8. CART SERVICE
+  # =========================================================
+  cart-service:
+    image: cart-service:1.0
+    container_name: cart-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - serviceregistry
+      - config-server
+      - redis
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+  # =========================================================
+  # REDIS
+  # =========================================================
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+
+# =========================================================
+# NETWORK
+# =========================================================
+networks:
+  ecommerce-network:
+    driver: bridge
+
+
+# =========================================================
+# VOLUMES
+# =========================================================
+volumes:
+  redis-data:

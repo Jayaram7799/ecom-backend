@@ -14,6 +14,8 @@ public class ProductInternalResponse {
     private String name;
 
     private BigDecimal price;
+    
+    private String imageUrl;
 
     private Integer availableQuantity;
 

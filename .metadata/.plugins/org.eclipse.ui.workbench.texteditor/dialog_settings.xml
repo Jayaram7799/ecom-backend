@@ -8,13 +8,17 @@
 		<item key="wholeword" value="true"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
+		<item key="replaceBarOpen" value="true"/>
 		<list key="findhistory">
+			<item value="BTM"/>
+			<item value="generateOrderNumber"/>
 			<item value="obtainUsername"/>
 			<item value="getOrderById"/>
 			<item value="JwtAuthFilter"/>
 			<item value="JwtAuth"/>
 		</list>
 		<list key="replacehistory">
+			<item value="Cartora"/>
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">

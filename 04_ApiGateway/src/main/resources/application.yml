@@ -3,4 +3,4 @@ spring:
     name: ApiGateway
 
   config:
-    import: optional:configserver:http://3.111.171.10:8888
+    import: optional:configserver:http://config-server:8888

@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
+	
     private final AuthService authService;
 
     /**
@@ -111,7 +112,7 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .message("Temporary password sent to email")
+                        .message("Password reset link has been sent to your email.")
                         .status(HttpStatus.OK.value())
                         .path(httpRequest.getRequestURI())
                         .timestamp(LocalDateTime.now())

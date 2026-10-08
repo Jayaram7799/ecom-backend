@@ -1,3 +1,4 @@
+
 package in.btm.entity;
 
 import java.time.LocalDateTime;
@@ -30,32 +31,34 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AuthUser {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer id;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
+	@Column(nullable = false, unique = true, length = 255)
+	private String email;
 
-    @Column(nullable = false)
-    private String password;
+	/*
+	 * Always store BCrypt/Argon2 hash. Never store plaintext password.
+	 */
+	@Column(nullable = false)
+	private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	@Builder.Default
+	private UserRole role = UserRole.USER;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AccountStatus status;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	@Builder.Default
+	private AccountStatus status = AccountStatus.INACTIVE;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+	@CreationTimestamp
+	@Column(name = "create_date_time", nullable = false, updatable = false)
+	private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
-    
-    private String resetToken;
-
-    private LocalDateTime resetTokenExpiry;
+	@UpdateTimestamp
+	@Column(name = "update_date_time")
+	private LocalDateTime updatedAt;
 }

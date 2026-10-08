@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <qualifiedTypeNameHistroy>
-    <fullyQualifiedTypeName name="jakarta.persistence.Table"/>
-    <fullyQualifiedTypeName name="jakarta.persistence.EnumType"/>
-    <fullyQualifiedTypeName name="jakarta.persistence.Id"/>
-    <fullyQualifiedTypeName name="org.springframework.data.jpa.repository.JpaRepository"/>
-    <fullyQualifiedTypeName name="in.btm.entity.Payment"/>
-    <fullyQualifiedTypeName name="lombok.Value"/>
-    <fullyQualifiedTypeName name="org.springframework.beans.factory.annotation.Value"/>
-    <fullyQualifiedTypeName name="in.btm.dto.RazorpayOrderResponse"/>
     <fullyQualifiedTypeName name="in.btm.dto.CreatePaymentRequest"/>
     <fullyQualifiedTypeName name="in.btm.dto.PaymentVerificationRequest"/>
     <fullyQualifiedTypeName name="in.btm.repository.PaymentRepository"/>
@@ -29,17 +21,13 @@
     <fullyQualifiedTypeName name="java.util.Optional"/>
     <fullyQualifiedTypeName name="org.springframework.data.jpa.repository.Query"/>
     <fullyQualifiedTypeName name="in.btm.dto.ApiResponse"/>
-    <fullyQualifiedTypeName name="lombok.Builder"/>
     <fullyQualifiedTypeName name="lombok.Builder.Default"/>
     <fullyQualifiedTypeName name="org.mapstruct.Mapping"/>
     <fullyQualifiedTypeName name="org.mapstruct.MappingTarget"/>
     <fullyQualifiedTypeName name="in.btm.exceptions.PaymentNotReadyException"/>
     <fullyQualifiedTypeName name="in.btm.enums.PaymentStatus"/>
-    <fullyQualifiedTypeName name="in.btm.enums.OrderStatus"/>
-    <fullyQualifiedTypeName name="java.math.BigDecimal"/>
     <fullyQualifiedTypeName name="java.util.UUID"/>
     <fullyQualifiedTypeName name="in.btm.dto.OrderDetailsResponse"/>
-    <fullyQualifiedTypeName name="in.btm.dto.OrderItemResponse"/>
     <fullyQualifiedTypeName name="in.btm.dto.CreateOrderRequest"/>
     <fullyQualifiedTypeName name="in.btm.dto.OrderItemRequest"/>
     <fullyQualifiedTypeName name="in.btm.exception.OrderNotFoundException"/>
@@ -47,17 +35,29 @@
     <fullyQualifiedTypeName name="in.btm.validator.OrderValidator"/>
     <fullyQualifiedTypeName name="in.btm.mapper.OrderMapper"/>
     <fullyQualifiedTypeName name="in.btm.kafka.producer.OrderProducer"/>
-    <fullyQualifiedTypeName name="in.btm.entity.Order"/>
-    <fullyQualifiedTypeName name="lombok.RequiredArgsConstructor"/>
     <fullyQualifiedTypeName name="org.springframework.stereotype.Component"/>
     <fullyQualifiedTypeName name="in.btm.kafka.event.OrderEventPublisher"/>
-    <fullyQualifiedTypeName name="in.btm.dto.ProductInternalResponse"/>
     <fullyQualifiedTypeName name="in.btm.exception.ProductNotFoundException"/>
-    <fullyQualifiedTypeName name="org.springframework.cloud.openfeign.EnableFeignClients"/>
     <fullyQualifiedTypeName name="lombok.AllArgsConstructor"/>
-    <fullyQualifiedTypeName name="lombok.Data"/>
     <fullyQualifiedTypeName name="in.btm.dto.PaymentVerificationResponse"/>
     <fullyQualifiedTypeName name="in.btm.repository.OrderItemRepository"/>
-    <fullyQualifiedTypeName name="java.util.List"/>
+    <fullyQualifiedTypeName name="in.btm.entity.Order"/>
     <fullyQualifiedTypeName name="in.btm.entity.OrderItem"/>
+    <fullyQualifiedTypeName name="in.btm.entity.OutboxEvent"/>
+    <fullyQualifiedTypeName name="lombok.RequiredArgsConstructor"/>
+    <fullyQualifiedTypeName name="in.btm.feign.ProductClient"/>
+    <fullyQualifiedTypeName name="in.btm.dto.ProductInternalResponse"/>
+    <fullyQualifiedTypeName name="org.springframework.cloud.openfeign.EnableFeignClients"/>
+    <fullyQualifiedTypeName name="org.springframework.scheduling.annotation.EnableScheduling"/>
+    <fullyQualifiedTypeName name="in.btm.enums.OrderStatus"/>
+    <fullyQualifiedTypeName name="java.time.LocalDateTime"/>
+    <fullyQualifiedTypeName name="java.math.BigDecimal"/>
+    <fullyQualifiedTypeName name="in.btm.dto.OrderItemResponse"/>
+    <fullyQualifiedTypeName name="lombok.Builder"/>
+    <fullyQualifiedTypeName name="lombok.Data"/>
+    <fullyQualifiedTypeName name="java.util.List"/>
+    <fullyQualifiedTypeName name="in.btm.dto.OrderSummaryResponse"/>
+    <fullyQualifiedTypeName name="in.btm.util.EmailUtil"/>
+    <fullyQualifiedTypeName name="in.btm.enums.AccountStatus"/>
+    <fullyQualifiedTypeName name="in.btm.enums.TokenType"/>
 </qualifiedTypeNameHistroy>
